@@ -1,0 +1,230 @@
+// ============================================================
+// Prisma Schema — O'quv Markaz
+// Phase 4A: Database Architecture
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================================
+// ENUMS
+// ============================================================
+
+/// Supported social media platforms
+enum SocialPlatform {
+  telegram
+  instagram
+  facebook
+  youtube
+}
+
+/// Registration application status
+enum RegistrationStatus {
+  NEW
+  CONTACTED
+  COMPLETED
+  CANCELLED
+}
+
+// ============================================================
+// MODELS
+// ============================================================
+
+/// A — Site Settings
+/// There should be exactly one active record (id = 1 by convention).
+model SiteSettings {
+  id              Int      @id @default(autoincrement())
+  centerName      String
+  logo            String?
+  description     String?
+  phone           String?
+  email           String?
+  address         String?
+  heroTitle       String?
+  heroDescription String?
+  heroImage       String?
+  aboutTitle      String?
+  aboutDescription String?
+  aboutImage      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
+/// B — Department (O'quv bo'limlari)
+model Department {
+  id          Int      @id @default(autoincrement())
+  title       String
+  slug        String   @unique
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  registrations Registration[]
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("departments")
+}
+
+/// C — Teacher (O'qituvchilar)
+model Teacher {
+  id             Int      @id @default(autoincrement())
+  name           String
+  position       String
+  specialization String?
+  experience     String?
+  bio            String?
+  image          String?
+  telegram       String?
+  instagram      String?
+  isActive       Boolean  @default(true)
+  sortOrder      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("teachers")
+}
+
+/// D — Management (Rahbariyat)
+model ManagementMember {
+  id        Int      @id @default(autoincrement())
+  name      String
+  position  String
+  bio       String?
+  image     String?
+  telegram  String?
+  instagram String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("management_members")
+}
+
+/// E — Statistics (Statistika)
+model Statistic {
+  id        Int      @id @default(autoincrement())
+  label     String
+  value     String
+  sortOrder Int      @default(0)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("statistics")
+}
+
+/// F — Gallery (Galereya)
+model GalleryItem {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  image       String
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("gallery_items")
+}
+
+/// G — Social Links (Ijtimoiy tarmoqlar)
+model SocialLink {
+  id        Int            @id @default(autoincrement())
+  platform  SocialPlatform
+  label     String
+  url       String
+  icon      String?
+  isActive  Boolean        @default(true)
+  sortOrder Int            @default(0)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([isActive])
+  @@index([sortOrder])
+  @@map("social_links")
+}
+
+/// H — Registration (Ro'yxatdan o'tish)
+/// Submitted by public website visitors.
+/// departmentId is nullable — user may submit without choosing a department.
+/// Registrations are NEVER deleted when a department is removed (SetNull).
+model Registration {
+  id              Int                @id @default(autoincrement())
+  fullName        String
+  phone           String
+  email           String?
+  departmentId    Int?
+  message         String?
+  privacyAccepted Boolean            @default(false)
+  status          RegistrationStatus @default(NEW)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  department Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([departmentId])
+  @@index([createdAt])
+  @@map("registrations")
+}
+
+// ============================================================
+// ADMIN AUTHENTICATION MODELS
+// Phase 4B: Secure Admin Authentication
+// ============================================================
+
+/// I — Admin (Administratorlar)
+model Admin {
+  id           Int            @id @default(autoincrement())
+  username     String         @unique
+  email        String         @unique
+  passwordHash String
+  name         String
+  isActive     Boolean        @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  sessions     AdminSession[]
+
+  @@index([isActive])
+  @@map("admins")
+}
+
+/// J — Admin Session (Admin sessiyalari)
+model AdminSession {
+  id         String   @id @default(uuid())
+  adminId    Int
+  tokenHash  String   @unique
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@map("admin_sessions")
+}
+

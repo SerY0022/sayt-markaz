@@ -1,69 +1,143 @@
-import Image from "next/image";
+import { Header } from "@/components/sections/header"
+import { Hero } from "@/components/sections/hero"
+import { About } from "@/components/sections/about"
+import { Departments } from "@/components/sections/departments"
+import { Advantages } from "@/components/sections/advantages"
+import { Teachers } from "@/components/sections/teachers"
+import { Management } from "@/components/sections/management"
+import { Statistics } from "@/components/sections/statistics"
+import { Gallery } from "@/components/sections/gallery"
+import { SocialLinks } from "@/components/sections/social"
+import { Registration } from "@/components/sections/registration"
+import { Footer } from "@/components/sections/footer"
+import { SettingsData } from "@/types/site"
 
-export default function Home() {
+import { prisma } from "@/lib/prisma"
+import { 
+  Department as PrismaDepartment, 
+  Teacher as PrismaTeacher, 
+  ManagementMember as PrismaManagementMember,
+  Statistic as PrismaStatistic,
+  GalleryItem as PrismaGalleryItem,
+  SocialLink as PrismaSocialLink
+} from "@prisma/client"
+
+export default async function Home() {
+  let siteSettings = null
+  let activeDepartments: PrismaDepartment[] = []
+  let activeTeachers: PrismaTeacher[] = []
+  let activeManagement: PrismaManagementMember[] = []
+  let activeStatistics: PrismaStatistic[] = []
+  let activeGallery: PrismaGalleryItem[] = []
+  let activeSocials: PrismaSocialLink[] = []
+
+  try {
+    const [
+      settingsResult,
+      departmentsResult,
+      teachersResult,
+      managementResult,
+      statisticsResult,
+      galleryResult,
+      socialsResult
+    ] = await Promise.allSettled([
+      prisma.siteSettings.findUnique({ where: { id: 1 } }),
+      prisma.department.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.teacher.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.managementMember.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.statistic.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.galleryItem.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } }),
+      prisma.socialLink.findMany({ where: { isActive: true }, orderBy: { sortOrder: "asc" } })
+    ])
+
+    if (settingsResult.status === "fulfilled") siteSettings = settingsResult.value
+    if (departmentsResult.status === "fulfilled") activeDepartments = departmentsResult.value
+    if (teachersResult.status === "fulfilled") activeTeachers = teachersResult.value
+    if (managementResult.status === "fulfilled") activeManagement = managementResult.value
+    if (statisticsResult.status === "fulfilled") activeStatistics = statisticsResult.value
+    if (galleryResult.status === "fulfilled") activeGallery = galleryResult.value
+    if (socialsResult.status === "fulfilled") activeSocials = socialsResult.value
+  } catch (error) {
+    console.error("Error fetching data:", error)
+  }
+
+  const settings: SettingsData = {
+    centerName: siteSettings?.centerName || "O'quv Markaz",
+    description: siteSettings?.description || "Zamonaviy ta'lim, amaliy ko'nikmalar va tajribali ustozlar bilan o'z kelajagingizni yarating. Biz sizning muvaffaqiyatingiz uchun ishlaymiz.",
+    phone: siteSettings?.phone || "+998 90 123 45 67",
+    email: siteSettings?.email || "info@oquvmarkaz.uz",
+    address: siteSettings?.address || "Toshkent shahar, Yunusobod tumani, Amir Temur ko'chasi, 1-uy",
+    heroTitle: siteSettings?.heroTitle || "Kelajagingizni bugundan boshlang",
+    heroDescription: siteSettings?.heroDescription || "Zamonaviy ta'lim, amaliy ko'nikmalar va tajribali ustozlar bilan o'z kelajagingizni yarating.",
+    heroImage: siteSettings?.heroImage || "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=1000&auto=format&fit=crop",
+    aboutTitle: siteSettings?.aboutTitle || "Biz haqimizda",
+    aboutDescription: siteSettings?.aboutDescription || "O'quv markazimiz 2020-yildan beri yoshlarga zamonaviy kasblar va xorijiy tillarni o'rgatish bilan shug'ullanib kelmoqda. Bizning asosiy maqsadimiz – o'quvchilarimizga nafaqat nazariy bilimlar, balki amaliy ko'nikmalar ham berish.",
+    aboutImage: siteSettings?.aboutImage || "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1000&auto=format&fit=crop",
+    logo: siteSettings?.logo || undefined,
+  }
+
+  const formattedDepartments = activeDepartments.map((d: PrismaDepartment) => ({
+    id: String(d.id),
+    title: d.title,
+    description: d.description || "",
+    image: d.image || "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?q=80&w=600&auto=format&fit=crop",
+    features: []
+  }))
+
+  const formattedTeachers = activeTeachers.map((t: PrismaTeacher) => ({
+    id: String(t.id),
+    name: t.name,
+    position: t.position,
+    specialization: t.specialization || "",
+    experience: t.experience || "",
+    image: t.image || "",
+    telegram: t.telegram || "",
+    instagram: t.instagram || "",
+    bio: t.bio || undefined,
+  }))
+
+  const formattedManagement = activeManagement.map((m: PrismaManagementMember) => ({
+    id: String(m.id),
+    name: m.name,
+    position: m.position,
+    bio: m.bio || "",
+    image: m.image || "",
+  }))
+
+  const formattedStatistics = activeStatistics.map((s: PrismaStatistic) => ({
+    id: String(s.id),
+    label: s.label,
+    value: s.value,
+  }))
+
+  const formattedGallery = activeGallery.map((g: PrismaGalleryItem) => ({
+    id: String(g.id),
+    title: g.title,
+    description: g.description || undefined,
+    image: g.image,
+  }))
+
+  const formattedSocials = activeSocials.map((s: PrismaSocialLink) => ({
+    platform: s.platform,
+    url: s.url,
+  }))
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <Header settings={settings} />
+      <main className="overflow-x-hidden">
+        <Hero settings={settings} />
+        <About settings={settings} />
+        <Departments departmentsData={formattedDepartments} />
+        <Advantages />
+        <Teachers teachersData={formattedTeachers} />
+        <Management managementData={formattedManagement} />
+        <Statistics statisticsData={formattedStatistics} />
+        <Gallery galleryData={formattedGallery} />
+        <SocialLinks socialData={formattedSocials} />
+        <Registration departmentsData={formattedDepartments} />
       </main>
-    </div>
-  );
+      <Footer settings={settings} socialData={formattedSocials} />
+    </>
+  )
 }
