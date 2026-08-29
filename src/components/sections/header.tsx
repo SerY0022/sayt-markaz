@@ -70,46 +70,48 @@ export function Header({ settings }: { settings: SettingsData }) {
       </Container>
 
       {/* Mobile Nav Overlay */}
-      {isOpen && (
-        <div className="fixed inset-0 top-0 left-0 w-full min-h-screen bg-background z-50 flex flex-col justify-start p-6 lg:hidden">
-          {/* Top header inside menu */}
-          <div className="flex justify-between items-center pb-4 border-b border-border">
-            <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
-              {settings.logo ? (
-                <Image src={settings.logo} alt={settings.centerName} width={120} height={32} className="h-8 w-auto object-contain" priority />
-              ) : (
-                <span className="text-xl font-bold text-primary tracking-tight">{settings.centerName}</span>
-              )}
-            </Link>
-            <button
-              className="p-2 text-text"
-              onClick={() => setIsOpen(false)}
-              aria-label="Menyuni yopish"
-            >
-              <X className="size-6" />
-            </button>
-          </div>
-
-          {/* Links */}
-          <nav className="flex flex-col gap-3 mt-6 text-lg overflow-y-auto pb-8">
-            {navLinks.map((link) => (
-              <Link 
-                key={link.href} 
-                href={link.href}
-                className="py-3 px-4 block text-text font-medium hover:bg-muted rounded-lg transition-colors"
-                onClick={() => setIsOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-            <div className="pt-4 pb-2 mt-4 border-t border-border">
-              <Button className="w-full py-6 text-lg rounded-md" asChild onClick={() => setIsOpen(false)}>
-                <Link href="#royxatdan-otish">Ro'yxatdan o'tish</Link>
-              </Button>
-            </div>
-          </nav>
+      <div 
+        className={`fixed inset-0 top-0 left-0 w-full min-h-screen bg-background z-50 flex flex-col justify-start p-6 lg:hidden transition-all duration-300 ease-in-out transform ${
+          isOpen ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 -translate-y-4 pointer-events-none"
+        }`}
+      >
+        {/* Top header inside menu */}
+        <div className="flex justify-between items-center pb-4 border-b border-border">
+          <Link href="/" className="flex items-center gap-2" onClick={() => setIsOpen(false)}>
+            {settings.logo ? (
+              <Image src={settings.logo} alt={settings.centerName} width={120} height={32} className="h-8 w-auto object-contain" priority />
+            ) : (
+              <span className="text-xl font-bold text-primary tracking-tight">{settings.centerName}</span>
+            )}
+          </Link>
+          <button
+            className="p-2 text-text"
+            onClick={() => setIsOpen(false)}
+            aria-label="Menyuni yopish"
+          >
+            <X className="size-6" />
+          </button>
         </div>
-      )}
+
+        {/* Links */}
+        <nav className="flex flex-col gap-3 mt-6 text-lg overflow-y-auto pb-8">
+          {navLinks.map((link) => (
+            <Link 
+              key={link.href} 
+              href={link.href}
+              className="py-3 px-4 block text-text font-medium hover:bg-muted rounded-lg transition-all duration-200 hover:translate-x-2"
+              onClick={() => setIsOpen(false)}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <div className="pt-4 pb-2 mt-4 border-t border-border">
+            <Button className="w-full py-6 text-lg rounded-md" asChild onClick={() => setIsOpen(false)}>
+              <Link href="#royxatdan-otish">Ro'yxatdan o'tish</Link>
+            </Button>
+          </div>
+        </nav>
+      </div>
     </header>
   )
 }
