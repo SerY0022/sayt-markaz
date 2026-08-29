@@ -1,7 +1,12 @@
+"use client"
+
+import { useState } from "react"
 import { gallery as mockGallery } from "@/data/site-data"
 import { Container } from "../layout/container"
 import { Section } from "../layout/section"
 import { GalleryImage } from "./gallery-image"
+import Lightbox from "yet-another-react-lightbox"
+import "yet-another-react-lightbox/styles.css"
 
 export type GalleryData = {
   id: string
@@ -11,9 +16,16 @@ export type GalleryData = {
 }
 
 export function Gallery({ galleryData }: { galleryData?: GalleryData[] }) {
+  const [index, setIndex] = useState(-1)
+
   const displayGallery = galleryData && galleryData.length > 0
     ? galleryData
     : mockGallery
+
+  const slides = displayGallery.map(item => ({
+    src: item.image,
+    alt: item.title,
+  }))
 
   return (
     <Section id="galereya" className="bg-background">
@@ -24,8 +36,12 @@ export function Gallery({ galleryData }: { galleryData?: GalleryData[] }) {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {displayGallery.map((item) => (
-            <div key={item.id} className="group relative aspect-video rounded-xl overflow-hidden bg-muted">
+          {displayGallery.map((item, idx) => (
+            <div 
+              key={item.id} 
+              className="group relative aspect-video rounded-xl overflow-hidden bg-muted cursor-pointer"
+              onClick={() => setIndex(idx)}
+            >
               <GalleryImage
                 src={item.image}
                 alt={item.title}
@@ -38,6 +54,13 @@ export function Gallery({ galleryData }: { galleryData?: GalleryData[] }) {
             </div>
           ))}
         </div>
+
+        <Lightbox
+          open={index >= 0}
+          close={() => setIndex(-1)}
+          index={index}
+          slides={slides}
+        />
       </Container>
     </Section>
   )
